@@ -1,0 +1,32 @@
+version: '3.7'
+
+volumes:
+  postgres_data:
+
+services:
+    postgres:
+      image: postgres:12.0
+      environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - PGPORT=${DB_PORT}
+      - POSTGRES_USER=${DB_USER}
+      env_file:
+      - .env
+      volumes:
+        - postgres_data:/var/lib/postgresql/data/
+
+    api:
+      build:
+        context: .
+      command: sh -c "python manage.py makemigrations &&
+                    python manage.py migrate &&
+                    gunicorn api.wsgi:application --bind 0.0.0.0:${APP_PORT} --workers=3"
+      env_file:
+      - .env
+      ports:
+        - ${APP_PORT}:${APP_PORT}
+      volumes:
+        - .:/usr/src/app
+      depends_on:
+        - postgres
