@@ -1,6 +1,12 @@
-FROM python:3.9-slim-bullseye
+FROM node:16-alpine AS builder
+WORKDIR /app
+COPY ./package.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-COPY . /usr/src/app
-RUN pip3 install -r /usr/src/app/config/requirements.txt
 
-WORKDIR /usr/src/app/api
+FROM node:12.13-alpine
+WORKDIR /app
+COPY --from=builder /app ./
+CMD ["node", "dist/index.js"]
